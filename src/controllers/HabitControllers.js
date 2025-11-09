@@ -102,15 +102,6 @@ export const UpdateHabit = async (req, res) => {
     const existingHabit = await Habit.findById(id);
     if (!existingHabit) return HttpResponse(res, 404, true, 'Habit not found');
 
-    // Authorization: only creator can update
-    if (!existingHabit.creatorID.equals(req.user._id))
-      return HttpResponse(
-        res,
-        403,
-        true,
-        'Unauthorized: Not the habit creator'
-      );
-
     const { title, description, category, reminderTime, image, isPublic } =
       req.body;
     if (
@@ -159,15 +150,6 @@ export const DeleteHabit = async (req, res) => {
   try {
     const existingHabit = await Habit.findById(id);
     if (!existingHabit) return HttpResponse(res, 404, true, 'Habit not found');
-
-    // Authorization: only creator can delete
-    if (!existingHabit.creatorID.equals(req.user._id))
-      return HttpResponse(
-        res,
-        403,
-        true,
-        'Unauthorized: Not the habit creator'
-      );
 
     await Habit.findByIdAndDelete(id);
     return HttpResponse(res, 200, false, 'Habit deleted successfully');
