@@ -7,7 +7,7 @@ import {
 
 // ✅ Create new progress (prevent duplicates per day)
 export const CreateProgressByUseridandHabitid = async (req, res) => {
-  const { UserId, HabitId } = req.params;
+  const { UserId, HabitId } = req.body;
 
   if (!UserId || !HabitId)
     return HttpResponse(res, 400, true, 'Both UserId and HabitId are required');
