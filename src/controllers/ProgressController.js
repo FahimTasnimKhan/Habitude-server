@@ -7,35 +7,53 @@ import {
 
 // ✅ Create new progress (prevent duplicates per day)
 export const CreateProgressByUseridandHabitid = async (req, res) => {
-  const { UserId, HabitId } = req.body;
+  const { UserId, HabitId, date } = req.body;
 
   if (!UserId || !HabitId)
     return HttpResponse(res, 400, true, 'Both UserId and HabitId are required');
 
   try {
-    // Normalize the date to midnight
+    // Normalize the date (midnight)
+    const normalizedDate = date ? new Date(date) : new Date();
+    normalizedDate.setHours(0, 0, 0, 0);
+
+    // Optional: Prevent future dates
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    if (normalizedDate > today) {
+      return HttpResponse(
+        res,
+        400,
+        true,
+        'Cannot create progress for a future date'
+      );
+    }
 
-    // Check for existing progress
+    // Check for existing progress in the same calendar day
+    const startOfDay = new Date(normalizedDate);
+    const endOfDay = new Date(normalizedDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
     const existingProgress = await Progress.exists({
       UserId,
       HabitId,
-      date: today,
+      date: { $gte: startOfDay, $lte: endOfDay },
     });
 
-    if (existingProgress)
+    if (existingProgress) {
       return HttpResponse(
         res,
         409,
         true,
-        'You have already marked this habit as complete today'
+        'You have already marked this habit as complete on this date'
       );
+    }
 
+    // Create the new progress record
     const newProgress = new Progress({
       UserId,
       HabitId,
-      date: today,
+      date: normalizedDate,
     });
 
     await newProgress.save();
@@ -50,13 +68,13 @@ export const CreateProgressByUseridandHabitid = async (req, res) => {
   } catch (error) {
     console.error(error);
 
-    // Handle duplicate key error (index uniqueness)
+    // Handle duplicate key error (in case of race condition)
     if (error.code === 11000) {
       return HttpResponse(
         res,
         409,
         true,
-        'Duplicate entry: You have already completed this habit today'
+        'Duplicate entry: You have already completed this habit on this date'
       );
     }
 
