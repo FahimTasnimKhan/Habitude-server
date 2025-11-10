@@ -1,34 +1,26 @@
-// models/Progress.js
+// models/Habit.js
 import mongoose from 'mongoose';
 
-const ProgressSchema = new mongoose.Schema(
+const HabitSchema = new mongoose.Schema(
   {
-    UserId: {
+    title: { type: String, required: true, trim: true },
+    description: { type: String, required: true },
+    category: {
+      type: String,
+      required: true,
+      enum: ['Morning', 'Work', 'Fitness', 'Evening', 'Study'],
+    },
+    reminderTime: { type: String },
+    image: { type: String, default: '' },
+    creatorID: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
     },
-    HabitId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Habit',
-      required: true,
-    },
-    date: {
-      type: Date,
-      required: true,
-      default: () => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return today;
-      },
-    },
+    isPublic: { type: Boolean, default: false },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-ProgressSchema.index({ UserId: 1, HabitId: 1, date: 1 }, { unique: true });
-
-const Progress = mongoose.model('Progress', ProgressSchema, 'progresses');
-export default Progress;
+const Habit = mongoose.model('Habit', HabitSchema, 'habits');
+export default Habit;
