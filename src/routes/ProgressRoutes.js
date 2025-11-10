@@ -3,7 +3,7 @@ import {
   CreateProgressByUseridandHabitid,
   DeleteProgressByID,
   GetProgressByUseridandHabitid,
-} from '../controllers/ProgressController';
+} from '../controllers/ProgressController.js';
 
 const router = express.Router();
 
