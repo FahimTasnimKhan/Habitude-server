@@ -15,20 +15,14 @@ const ProgressSchema = new mongoose.Schema(
     },
     date: {
       type: Date,
-      required: true,
-      default: () => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return today;
-      },
+      default: Date.now,
     },
   },
   {
-    timestamps: true,
+    timestamps: true, // adds createdAt and updatedAt
   }
 );
 
-ProgressSchema.index({ UserId: 1, HabitId: 1, date: 1 }, { unique: true });
-
 const Progress = mongoose.model('Progress', ProgressSchema, 'progresses');
 export default Progress;
+// progresses is the Collection Name
