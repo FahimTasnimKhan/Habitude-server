@@ -2,6 +2,7 @@
 import mongoose from 'mongoose';
 import Habit from '../models/Habit.js';
 import { HttpResponse } from '../utils/HttpResponse.js';
+import cloudinary from '../config/cloudinary.js';
 
 // Get all public habits
 export const GetPublicHabits = async (req, res) => {
@@ -9,7 +10,7 @@ export const GetPublicHabits = async (req, res) => {
     const habits = await Habit.find({ isPublic: true })
       .populate('creatorID', 'name email photoURL')
       .sort({ createdAt: -1 }) // newest first
-      .limit(6) // optional: limit for featured habits
+
       .select('-__v');
 
     return HttpResponse(
@@ -46,6 +47,29 @@ export const GetHabitByID = async (req, res) => {
   }
 };
 
+// Get User Habits
+export const GetUserHabits = async (req, res) => {
+  const { UserId } = req.params;
+  if (!UserId) return HttpResponse(res, 400, true, 'User ID is required');
+  if (!mongoose.Types.ObjectId.isValid(UserId))
+    return HttpResponse(res, 400, true, 'Invalid User ID format');
+  try {
+    const habits = await Habit.find({ creatorID: UserId })
+      .populate('creatorID', 'name email photoURL')
+      .select('-__v');
+    return HttpResponse(
+      res,
+      200,
+      false,
+      'User Habits Fetched Successfully',
+      habits
+    );
+  } catch (error) {
+    console.error(error);
+    return HttpResponse(res, 500, true, 'Internal Server Error');
+  }
+};
+
 // Create a new habit
 export const CreateHabit = async (req, res) => {
   const {
@@ -66,13 +90,19 @@ export const CreateHabit = async (req, res) => {
       'Title, Description, Category, and CreatorID are required'
     );
 
+  let imageUrl = '';
+  if (image) {
+    const uploadResponse = await cloudinary.uploader.upload(image);
+    imageUrl = uploadResponse.secure_url;
+  }
+
   try {
     const newHabit = new Habit({
       title,
       description,
       category,
       reminderTime: reminderTime || '',
-      image: image || '',
+      image: imageUrl,
       creatorID,
       isPublic: isPublic ?? false,
     });
